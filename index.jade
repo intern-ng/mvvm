@@ -1,0 +1,15 @@
+extends framework
+append head
+append favicon
+append style
+append script
+  +javascript('main.js')
+append content
+  .container
+    h1 MVVM Demonstration
+    .row
+      .col-xs-12
+        form
+          .form-group
+            label Page Title
+            input.form-control(type='text')
