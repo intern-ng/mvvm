@@ -16,8 +16,8 @@ define({
     _electron()
     .pipe(kit.TextInput('input[name="title"]'))
     .pipe(kit.Bypass, kit.ObjectWriter($('h1').get(0), {
-      innerHTML: function (___) {
-        return (___.text) ? 'MVVM Demonstration - ' + ___.text : 'MVVM Demonstration';
+      innerHTML: function (text) {
+        return (text) ? 'MVVM Demonstration - ' + text : 'MVVM Demonstration';
       }
     }))
     .attach()

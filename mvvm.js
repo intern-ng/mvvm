@@ -377,29 +377,37 @@ define({
        * @desc Obtain value from pipe and write to object
        * @param obj - Object to write property to
        * @param map {object} - Map attribute_name -> value_name
+       * @param assign {function} - function to assign property value
        */
-      ObjectWriter: function (obj, map) { // {{{
-        var keys = _.keys(map), vals = _.values(map);
-        return function (use) {
-          if (_.any(vals, function (v) {
-            return typeid(v) == 'function';
-          })) {
-            return use(function (___) {
-              _.each(map, function (v, k) {
-                obj[k] = (typeid(v) == 'function') ? v.call(obj, ___) : ___[v];
-              });
-            });
+      ObjectWriter: function (obj, map, assign) { // {{{
+        var keys = _.keys(map);
+
+        var capture = _(map).map(function (v, k) {
+          if (typeid(v) == 'function') {
+            return (v.capture = v.capture || signatureof(v).param);
           } else {
-            return use(_.extend(function () {
-              _(keys)
-              .zipObject(Array.prototype.slice.call(arguments, 0))
-              .each(function (v, k) {
-                obj[k] = v;
-              });
-            }, {
-              capture: vals
-            }));
+            return v;
           }
+        }).flatten().uniq().value();
+
+        assign = assign || function (attr, value) {
+          this[attr] = value;
+        };
+
+        return function (use) {
+          return use(_.extend(function () {
+            var args = _.zipObject(capture, Array.prototype.slice.call(arguments, 0));
+            _.each(keys, function (attr) {
+              var vkey = map[attr];
+              if (typeid(vkey) == 'function') {
+                assign.call(obj, attr, vkey.apply(obj, _.map(vkey.capture, function (k) { return args[k]; })));
+              } else {
+                assign.call(obj, attr, args[vkey]);
+              }
+            });
+          }, {
+            capture: capture
+          }));
         };
       }, // }}}
 
