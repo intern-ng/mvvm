@@ -12,17 +12,15 @@ define({
     };
 
     var Assigner$Val = function (attr, value) {
-      this.val(value);
-      this.trigger('input');
+      if (this.val() != value) {
+        this.val(value);
+        this.trigger('input');
+      }
     };
 
     with (kit) electron()
     .pipe(TextInput('input[name="title"]'))
-    .pipe(Bypass,
-          ObjectWriter(document, { title: 'text' }),
-          ObjectWriter($('input[name="mirror"]'), {
-            val: 'text'
-          }, CallAssigner))
+    .pipe(Bypass, ObjectWriter(document, { title: 'text' }))
     .attach()
     .activate();
 
@@ -37,10 +35,10 @@ define({
     .activate();
 
     _electron()
+    .pipe(kit.TextInput('input[name="title"]'))
+    .pipe(kit.ObjectWriter('input[name="mirror"]', { val: 'text' }, Assigner$Val))
     .pipe(kit.TextInput('input[name="mirror"]'))
-    .pipe(kit.ObjectWriter($('input[name="title"]'), {
-      val: 'text'
-    }, Assigner$Val))
+    .pipe(kit.ObjectWriter('input[name="title"]', { val: 'text' }, Assigner$Val))
     .attach()
     .activate();
 
