@@ -381,6 +381,12 @@ define({
        * @param assign {function} - function to assign property value
        */
       ObjectWriter: function (obj, map, assign) { // {{{
+
+        // jQuerify if given a selecter as object
+        if (typeid(obj) == 'string') {
+          obj = $(obj);
+        }
+
         var keys = _.keys(map);
 
         var capture = _(map).map(function (v, k) {
