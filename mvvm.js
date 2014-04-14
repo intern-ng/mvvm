@@ -340,6 +340,76 @@ define({
 
     // }}} Log
 
+    // Toolkit {{{
+
+    var toolkit = electron.toolkit = {};
+
+    var $ = require('jquery');
+
+    _.extend(toolkit, {
+
+      /**
+       * @name TextInput
+       * @type inlet
+       * @desc Monitor text content of text input element
+       * @param selector - jQuery selector
+       */
+      TextInput: function (selector) { // {{{
+        var $input = $(selector);
+        return function (use) {
+
+          // Event data emitter
+          var emit = (function () {
+            this.resolve({ text: $input.val() });
+          }).bind(this);
+
+          // Active on attach (section-level)
+          this
+          .on('attach', $.fn.on .bind($input, 'keyup', emit))
+          .on('detach', $.fn.off.bind($input, 'keyup', emit));
+
+        };
+      }, // }}}
+
+      /**
+       * @name ObjectWriter
+       * @type outlet
+       * @desc Obtain value from pipe and write to object
+       * @param obj - Object to write property to
+       * @param map {object} - Map attribute_name -> value_name
+       */
+      ObjectWriter: function (obj, map) { // {{{
+        var keys = _.keys(map), vals = _.values(map);
+        return function (use) {
+          return use(_.extend(function () {
+            _(keys)
+            .zipObject(Array.prototype.slice.call(arguments, 0))
+            .each(function (v, k) {
+              obj[k] = v;
+            });
+          }, {
+            capture: vals
+          }));
+        };
+      }, // }}}
+
+      /**
+       * @name Bypass
+       * @type converter
+       * @desc pass all input value to output of the section.
+       *       be sure to place the converter at first of a section,
+       *       or there is risk overwriting the expected output.
+       */
+      Bypass: function (use) { // {{{
+        return use(function (___) {
+          this.resolve(___);
+        });
+      }, // }}}
+
+    });
+
+    // }}} Toolkit
+
   }, // }}}
 
 });
