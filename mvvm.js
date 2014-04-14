@@ -364,9 +364,10 @@ define({
           }).bind(this);
 
           // Active on attach (section-level)
+          // FIXME `input` is new event from HTML5
           this
-          .on('attach', $.fn.on .bind($input, 'keyup', emit))
-          .on('detach', $.fn.off.bind($input, 'keyup', emit));
+          .on('attach', $.fn.on .bind($input, 'input', emit))
+          .on('detach', $.fn.off.bind($input, 'input', emit));
 
         };
       }, // }}}
