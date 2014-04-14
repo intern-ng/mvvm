@@ -88,26 +88,26 @@ define({
 
   }, // }}}
 
-  electron: function (global, module, exports, require) {
+  electron: function (global, module, exports, require) { // {{{
 
     var _ = require('lodash');
     var EventEmitter = require('event');
 
+    // Electron Core {{{
+
     var electron = module.exports = function (option) {
 
-      // Configure Option
+      // option {{{
+
       var opt = _.defaults(option || {}, {
         name: 'unknown'
       });
 
-      electron.log('Electron instance created', opt);
+      // }}} option
 
-      ///
-      // Circut
-      //    - A set of connected Converter
-      //    - Cascadable with another Circut
-      ///
-      var circut = function (use) { // {{{
+      // circut {{{
+
+      var circut = function (use) {
 
         electron.log('Initializing converter...');
 
@@ -117,6 +117,8 @@ define({
         this.on('detach', circut.detach);
 
         electron.log('Events connected');
+
+        // converter {{{
 
         return use(function (___) {
           //                 ^ Capture all input (cascade)
@@ -149,7 +151,13 @@ define({
 
         });
 
-      }; // }}}
+        // }}} converter
+
+      };
+
+      // }}} circut
+
+      // variable {{{
 
       // Section vector registry
       var sections = circut._sects = [];
@@ -170,9 +178,39 @@ define({
       // Converter function instance registry
       var converts = circut._convs = {};
 
-      var make_use = function (key) { // {{{
+      // }}} variable
 
-        // Register converter to registry
+      // pipe - add reaction section {{{
+
+      circut.pipe = function () {
+
+        var section = _.flatten(
+          Array.prototype.slice.call(arguments, 0)
+        );
+
+        sectionify(section);
+
+        _.each(section, function (initiator) {
+
+          // Assign initiator key
+          initiator.key = uuid();
+
+          // Initialize converter
+          initiator.call(section, useof(initiator.key));
+
+        });
+
+        sections.push(section);
+
+        return circut;
+
+      };
+
+      // (private) useof - help register converter initiated by `initiator` {{{
+
+      var useof = function (key) {
+
+        // Register converter to registry (`use` function)
         return function (converter) {
           if (typeid(converter) != 'function') {
             throw new TypeError('converter must be function');
@@ -191,52 +229,57 @@ define({
           electron.info('Converter', key, 'registered.');
         };
 
-      }; // }}}
+      };
 
-      circut.pipe = function () { // {{{
+      // }}} useof
 
-        var section = _.flatten(
-          Array.prototype.slice.call(arguments, 0)
-        );
+      // }}} pipe
 
-        sectionify(section);
+      // attach/detach - enable/disable external bindings {{{
 
-        _.each(section, function (initiator) {
-
-          // Assign initiator key
-          initiator.key = uuid();
-
-          // Initialize converter
-          initiator.call(section, make_use(initiator.key));
-
-        });
-
-        sections.push(section);
-
+      // Broadcast `attach` event to section-level
+      circut.attach = function () {
+        circut.emit('attach');
         return circut;
+      };
 
-      }; // }}}
+      // Broadcast `detach` event to section-level
+      circut.detach = function () {
+        circut.emit('detach');
+        return circut;
+      };
 
-      var eventify = function (object) { // {{{
+      // }}}
+
+      // activate - start reaction in section sandbox {{{
+
+      var activate = circut.activate = function () {
+        var sandbox = sectionify([]);
+        circut.call(sandbox, function (converter) {
+          return converter.call(sandbox, {});
+        });
+        sandbox.on('change', function (data) {
+          electron.log('Sandbox data changed:', data);
+        });
+        return sandbox;
+      };
+
+      // }}}
+
+      // eventify - attach object with EventEmitter {{{
+
+      var eventify = circut.eventify = function (object) {
         object._event = new EventEmitter();
         object.on = object._event.on.bind(object._event);
         object.emit = object._event.emit.bind(object._event);
         return object;
-      }; // }}}
-
-      // Configure circut passing all event to section {{{
-
-      eventify(circut).on('*', function () {
-        // Passthrough all event to section level
-        var args = Array.prototype.slice.call(arguments, 0);
-        _.each(sections, function (section) {
-          section.emit.apply(section, args);
-        });
-      });
+      };
 
       // }}}
 
-      var sectionify = function (section) { // {{{
+      // sectionify - configure section properties {{{
+
+      var sectionify = circut.sectionify = function (section) {
 
         section.data = {};
 
@@ -255,40 +298,30 @@ define({
 
         return section;
 
-      }; // }}}
-
-      // Attach/Detach Circut {{{
-
-      // Broadcast `attach` event to section-level
-      circut.attach = function () {
-        circut.emit('attach');
-        return circut;
-      };
-
-      // Broadcast `detach` event to section-level
-      circut.detach = function () {
-        circut.emit('detach');
-        return circut;
       };
 
       // }}}
 
-      circut.exec = function () { // Create section sandbox and execute chain {{{
-        var section = sectionify([]);
-        circut.call(section, function (converter) {
-          return converter.call(section, {});
+      // Configure circut broadcasting events to section {{{
+
+      eventify(circut)
+      .on('*', function () {
+        // Passthrough all event to section level
+        var args = Array.prototype.slice.call(arguments, 0);
+        _.each(sections, function (section) {
+          section.emit.apply(section, args);
         });
-        section.on('change', function (data) {
-          electron.log('Sandbox data changed:', data);
-        });
-        return section;
-      }; // }}}
+      });
+
+      // }}}
 
       return circut;
 
     };
 
-    // Log Control {{{
+    // }}} Electron Core
+
+    // Log {{{
 
     electron.LOG_LEVEL = 1;
 
@@ -305,9 +338,9 @@ define({
       };
     });
 
-    // }}}
+    // }}} Log
 
-  },
+  }, // }}}
 
 });
 
