@@ -381,15 +381,25 @@ define({
       ObjectWriter: function (obj, map) { // {{{
         var keys = _.keys(map), vals = _.values(map);
         return function (use) {
-          return use(_.extend(function () {
-            _(keys)
-            .zipObject(Array.prototype.slice.call(arguments, 0))
-            .each(function (v, k) {
-              obj[k] = v;
+          if (_.any(vals, function (v) {
+            return typeid(v) == 'function';
+          })) {
+            return use(function (___) {
+              _.each(map, function (v, k) {
+                obj[k] = (typeid(v) == 'function') ? v.call(obj, ___) : ___[v];
+              });
             });
-          }, {
-            capture: vals
-          }));
+          } else {
+            return use(_.extend(function () {
+              _(keys)
+              .zipObject(Array.prototype.slice.call(arguments, 0))
+              .each(function (v, k) {
+                obj[k] = v;
+              });
+            }, {
+              capture: vals
+            }));
+          }
         };
       }, // }}}
 
