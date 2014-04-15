@@ -370,7 +370,8 @@ define({
           // FIXME `input` is new event from HTML5
           this
           .on('attach', $.fn.on .bind($input, 'input', emit))
-          .on('detach', $.fn.off.bind($input, 'input', emit));
+          .on('detach', $.fn.off.bind($input, 'input', emit))
+          .on('attach', $.fn.trigger.bind($input, 'input'));
 
         };
       }, // }}}

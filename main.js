@@ -6,6 +6,26 @@ define({
     // import electron
     var electron = require('electron'), _electron = electron, kit = electron.toolkit;
 
+    // polling data source provider {{{
+
+    var HttpGet = function (url, data) {
+      return function () {
+        var _this = this;
+        return ajax.get(url, data, {
+          cache: false
+        }, ajax.handler({
+          200: function (data) {
+            return _this.resolve(data);
+          },
+          ___: function (data) {
+            return _this.failure(data);
+          }
+        }));
+      };
+    };
+
+    // }}}
+
     // assign `value` to object by calling function in object with name indicated by `attr` {{{
 
     var CallAssigner = function (attr, value) {
@@ -19,19 +39,25 @@ define({
     _electron()
 
     // `electron.pipe` creates a section and append converter initiators to the created section
-    .pipe(kit.TextInput('input[name="title"]'))
-    //        ^ event inlet
+    .pipe([
+          kit.TextInput('input[name="title"]'),
+          //        ^ event inlet
+
+          kit.Polling(HttpGet('/api/data.json'), 2000, 'data'),
+    ])
+
+    .pipe(kit.Bypass, kit.Manipulate(function (data) { return data; }))
 
     .pipe([
           kit.Bypass,                      // pass values from previous section to the next
-          kit.Manipulate(function (text) { // apply transformation
+          kit.Manipulate(function (name, text) { // apply transformation
             //                     ^ capture `text` property from input values
 
             return {
               title: text,
               header: (text) ?
-                'MVVM Demonstration - ' + text :
-                'MVVM Demonstration'
+                name + ' - ' + text :
+                name
             }; // yield `title` and `header`
           })
     ])
