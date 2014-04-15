@@ -353,15 +353,18 @@ define({
        * @type inlet
        * @desc Monitor text content of text input element
        * @param selector - jQuery selector
+       * @param attrname - (optional) name of data `text` by default
        */
-      TextInput: function (selector) { // {{{
+      TextInput: function (selector, attrname) { // {{{
         var $input = $(selector);
+        attrname = attrname || 'text';
         return function (use) {
 
           // Event data emitter
-          var emit = (function () {
-            this.resolve({ text: $input.val() });
-          }).bind(this);
+          var emit = (function (obj) {
+            obj[attrname] = $input.val();
+            return this.resolve(obj);
+          }).bind(this, {});
 
           // Active on attach (section-level)
           // FIXME `input` is new event from HTML5
