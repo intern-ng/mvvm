@@ -378,7 +378,7 @@ define({
        * @desc Manipulate values in pipe
        * @param processor - function(s) processing values
        */
-      Manipulate: function (processor) {
+      Manipulate: function (processor) { // {{{
 
         if (typeid(processor) == 'function') processor = [ processor ];
 
@@ -405,7 +405,7 @@ define({
           }));
         };
 
-      },
+      }, // }}}
 
       /**
        * @name ObjectWriter
