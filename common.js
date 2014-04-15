@@ -27,7 +27,7 @@ var qscomponent = function (name) {
 
 var signatureof = function (func) {
   var s = func.toString();
-  var m = s.match(/^\s*function\s*([^(]*)\s*\(([^)]*)\)\s*\{/i);
+  var m = s.match(/^\s*function\s*([^(]*)\s*\(([^)]*)\)\s*\x7b/i);
   if (m) {
     return {
       name: m[1] || null,
@@ -48,7 +48,7 @@ var uuid = function () {
   // AJAX Utility {{{
 
   var ajax = function (method, url, data, options, handler) {
-    if (typeid(options == 'function')) {
+    if (typeid(options) == 'function') {
       handler = options; options = {};
     }
 
