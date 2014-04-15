@@ -445,6 +445,60 @@ define({
       }, // }}}
 
       /**
+       * @name Polling
+       * @type inlet
+       * @desc Polling data and emit event when data changed
+       * @param resolver - function to yield data
+       * @param interval - interval to resolve data
+       * @param attrname - (optional) name of data `data` by default
+       */
+      Polling: function (resolver, interval, attrname) { // {{{
+        return function (use) {
+
+          var enabled = false;
+
+          // Event data emitter
+          var emit = (function (obj, data) {
+            setTimer();
+            if (!_.isEqual(obj[attrname], data)) {
+              obj[attrname] = data;
+              return this.resolve(obj);
+            }
+          }).bind(this, {});
+
+          var _this = this;
+
+          var resolve = resolver.bind({
+            resolve: emit,
+            failure: function (err) {
+              setTimer();
+              return _this.failure(err);
+            }
+          });
+
+          var setTimer = (function () {
+            var _timer;
+            return function () {
+              if (!enabled) return;
+              if (_timer) clearTimeout(_timer);
+              _timer = setTimeout(resolve, interval);
+            };
+          })();
+
+          this
+          .on('attach', function () {
+            enabled = true;
+            resolve();
+          })
+          .on('detach', function () {
+            elabled = false;
+          });
+
+        };
+
+      }, // }}}
+
+      /**
        * @name Bypass
        * @type converter
        * @desc pass all input value to output of the section.
