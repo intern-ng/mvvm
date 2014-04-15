@@ -1,6 +1,7 @@
 {
   "name": "intern-ng-mvvm",
   "version": "0.0.0",
+  "description": "MVVM/Reactive Design Demonstration Project",
   "authors": [
     "trinity <imandry.c@gmail.com>"
   ],

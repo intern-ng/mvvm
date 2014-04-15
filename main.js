@@ -40,23 +40,23 @@ define({
 
     // `electron.pipe` creates a section and append converter initiators to the created section
     .pipe([
-          kit.TextInput('input[name="title"]'),
+          kit.TextInput('input[name="title"]', 'tail'),
           //        ^ event inlet
 
-          kit.Polling(HttpGet('/api/data.json'), 2000, 'data'),
+          kit.Polling(HttpGet('/bower.json'), 2000, 'data'),
     ])
 
     .pipe(kit.Bypass, kit.Manipulate(function (data) { return data; }))
 
     .pipe([
           kit.Bypass,                      // pass values from previous section to the next
-          kit.Manipulate(function (name, text) { // apply transformation
+          kit.Manipulate(function (name, tail) { // apply transformation
             //                     ^ capture `text` property from input values
 
             return {
-              title: text,
-              header: (text) ?
-                name + ' - ' + text :
+              title: tail,
+              header: (tail) ?
+                name + ': ' + tail :
                 name
             }; // yield `title` and `header`
           })
@@ -69,7 +69,10 @@ define({
 
       // Write `header` value to $h1 using
       // CallAssigner: $h1.text.call($h1, header);
-      kit.ObjectWriter('h1'     , { text: 'header' }, CallAssigner)
+      kit.ObjectWriter('h1'     , { text: 'header' }      , CallAssigner),
+
+      // Write `title` value to document.title
+      kit.ObjectWriter('h4'     , { text: 'description' } , CallAssigner)
 
     )
 
