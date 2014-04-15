@@ -11,28 +11,28 @@ define({
       this[attr].call(this, value);
     };
 
+    _electron()
+    .pipe(kit.TextInput('input[name="title"]'))
+    .pipe(kit.Manipulate(function (text) {
+      return {
+        title: text || 'MVVM Demonstration',
+        header: (text) ? 'MVVM Demonstration - ' + text : 'MVVM Demonstration'
+      };
+    }))
+    .pipe(
+      kit.Bypass,
+      kit.ObjectWriter(document, { title: 'title' }),
+      kit.ObjectWriter('h1', { text: 'header' }, CallAssigner)
+    )
+    .attach()
+    .activate();
+
     var Assigner$Val = function (attr, value) {
       if (this.val() != value) {
         this.val(value);
         this.trigger('input');
       }
     };
-
-    with (kit) electron()
-    .pipe(TextInput('input[name="title"]'))
-    .pipe(Bypass, ObjectWriter(document, { title: 'text' }))
-    .attach()
-    .activate();
-
-    _electron()
-    .pipe(kit.TextInput('input[name="title"]'))
-    .pipe(kit.Bypass, kit.ObjectWriter($('h1').get(0), {
-      innerHTML: function (text) {
-        return (text) ? 'MVVM Demonstration - ' + text : 'MVVM Demonstration';
-      }
-    }))
-    .attach()
-    .activate();
 
     _electron()
     .pipe(kit.TextInput('input[name="title"]'))
