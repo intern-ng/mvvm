@@ -373,6 +373,41 @@ define({
       }, // }}}
 
       /**
+       * @name Manipulate
+       * @type converter
+       * @desc Manipulate values in pipe
+       * @param processor - function(s) processing values
+       */
+      Manipulate: function (processor) {
+
+        if (typeid(processor) == 'function') processor = [ processor ];
+
+        var capture = _(processor).map(function (v) {
+          if (typeid(v) == 'function') {
+            // XXX Side-effect: set `capture` property for processor(s)
+            return (v.capture = v.capture || signatureof(v).param);
+          } else {
+            throw new TypeError('processor must be function');
+          }
+        }).flatten().uniq().value();
+
+        return function (use) {
+          var _this = this;
+          return use(_.extend(function () {
+            var args = _.zipObject(capture, Array.prototype.slice.call(arguments, 0));
+            _this.resolve(_.reduce(processor, function (result, processor) {
+              return _.extend(result, processor.apply(
+                null, _.map(processor.capture, function (k) { return args[k]; })
+              ));
+            }, {}));
+          }, {
+            capture: capture
+          }));
+        };
+
+      },
+
+      /**
        * @name ObjectWriter
        * @type outlet
        * @desc Obtain value from pipe and write to object
@@ -387,15 +422,7 @@ define({
           obj = $(obj);
         }
 
-        var keys = _.keys(map);
-
-        var capture = _(map).map(function (v, k) {
-          if (typeid(v) == 'function') {
-            return (v.capture = v.capture || signatureof(v).param);
-          } else {
-            return v;
-          }
-        }).flatten().uniq().value();
+        var keys = _.keys(map), vals = _.values(map);
 
         assign = assign || function (attr, value) {
           this[attr] = value;
@@ -403,19 +430,15 @@ define({
 
         return function (use) {
           return use(_.extend(function () {
-            var args = _.zipObject(capture, Array.prototype.slice.call(arguments, 0));
+            var args = _.zipObject(vals, Array.prototype.slice.call(arguments, 0));
             _.each(keys, function (attr) {
-              var vkey = map[attr];
-              if (typeid(vkey) == 'function') {
-                assign.call(obj, attr, vkey.apply(obj, _.map(vkey.capture, function (k) { return args[k]; })));
-              } else {
-                assign.call(obj, attr, args[vkey]);
-              }
+              assign.call(obj, attr, args[map[attr]]);
             });
           }, {
-            capture: capture
+            capture: vals
           }));
         };
+
       }, // }}}
 
       /**
